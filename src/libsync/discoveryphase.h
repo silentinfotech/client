@@ -23,6 +23,7 @@
 #include <QMutex>
 #include <QWaitCondition>
 #include <QLinkedList>
+#include <qmath.h>
 
 namespace OCC {
 
@@ -43,7 +44,15 @@ struct SyncOptions
         , _minChunkSize(1 * 1000 * 1000) // 1 MB
         , _maxChunkSize(100 * 1000 * 1000) // 100 MB
         , _targetChunkUploadDuration(60 * 1000) // 1 minute
+        // TODO: increase this number when using HTTP2
+        , _maximumNetworkJobs(6) // Qt cannot do more anyway
+        , _maximumTransferJobs(3)
     {
+        static int maxNetworkJobsEnv = qgetenv("OWNCLOUD_MAX_PARALLEL").toUInt();
+        if (maxNetworkJobsEnv) {
+            _maximumNetworkJobs = maxNetworkJobsEnv;
+            _maximumTransferJobs = qCeil(_maximumNetworkJobs / 2.);
+        }
     }
 
     /** Maximum size (in Bytes) a folder can have without asking for confirmation.
@@ -73,6 +82,16 @@ struct SyncOptions
      * Set to 0 it will disable dynamic chunk sizing.
      */
     quint64 _targetChunkUploadDuration;
+
+    /** Number of allowed parallel network jobs */
+    int _maximumNetworkJobs;
+
+    /** Number of allowed parallel transfer network jobs.
+     *
+     * These jobs are also included in the _maximumNetworkJobs, so this value
+     * must be smaller or equal than that.
+     */
+    int _maximumTransferJobs;
 };
 
 
