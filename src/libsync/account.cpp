@@ -123,6 +123,20 @@ AbstractCredentials *Account::credentials() const
     return _credentials.data();
 }
 
+static QByteArray generateRequestId()
+{
+    QByteArray chars =
+        "abcdefghijklmnopqrstuvwxyz"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "0123456789";
+
+    QByteArray result(' ', 20);
+    for (int i = 0; i < result.size(); ++i) {
+        result[i] = chars[qrand() % chars.size()];
+    }
+    return result;
+}
+
 void Account::setCredentials(AbstractCredentials *cred)
 {
     // set active credential manager
@@ -155,6 +169,10 @@ void Account::setCredentials(AbstractCredentials *cred)
         SLOT(slotCredentialsFetched()));
     connect(_credentials.data(), SIGNAL(asked()),
         SLOT(slotCredentialsAsked()));
+
+    // Generate a new request id
+    _requestId = generateRequestId();
+    qCInfo(lcAccount) << "Account for" << url() << "has X-Request-ID" << _requestId;
 }
 
 QUrl Account::davUrl() const
@@ -230,6 +248,7 @@ QNetworkReply *Account::sendRequest(const QByteArray &verb, const QUrl &url, QNe
 {
     req.setUrl(url);
     req.setSslConfiguration(this->getOrCreateSslConfig());
+    req.setRawHeader("X-Request-ID", _requestId);
     if (verb == "HEAD" && !data) {
         return _am->head(req);
     } else if (verb == "GET" && !data) {
