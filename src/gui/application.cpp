@@ -109,6 +109,8 @@ Application::Application(int &argc, char **argv)
 {
     _startedAt.start();
 
+    qsrand(QDateTime::currentMSecsSinceEpoch());
+
 #ifdef Q_OS_WIN
     // Ensure OpenSSL config file is only loaded from app directory
     QString opensslConf = QCoreApplication::applicationDirPath() + QString("/openssl.cnf");

@@ -311,7 +311,7 @@ int main(int argc, char **argv)
     qputenv("OPENSSL_CONF", opensslConf.toLocal8Bit());
 #endif
 
-    qsrand(QTime::currentTime().msec() * QCoreApplication::applicationPid());
+    qsrand(QDateTime::currentMSecsSinceEpoch());
 
     CmdOptions options;
     options.silent = false;
